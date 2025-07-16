@@ -2,8 +2,8 @@ pipeline {
     agent {
         docker {
             image 'maven:3.9.6-eclipse-temurin-17'
-            // RE-ADD /usr/bin/docker:/usr/bin/docker here
             args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v /usr/bin/docker-compose:/usr/bin/docker-compose'
+            user '0:999' // Ensures the agent container runs with the correct group permissions
         }
     }
 
