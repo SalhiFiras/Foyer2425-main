@@ -12,13 +12,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class BlocServiceTest {
 
     @BeforeAll
-    public static void bedore() { // Ensure this line has 'public static'
+    public static void bedore() {
         // ... your setup code
     }
 
     @AfterAll
-    void after() {
-
+    public static void after() { // Corrected: Added 'public static' here
+        // ... your teardown code
     }
 
     @BeforeEach
