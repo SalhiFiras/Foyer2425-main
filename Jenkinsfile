@@ -1,8 +1,9 @@
 pipeline {
     agent {
         docker {
-            image 'maven:3.9.6-eclipse-temurin-17' 
-            args '-v /var/run/docker.sock:/var/run/docker.sock' 
+            image 'maven:3.9.6-eclipse-temurin-17'
+            // MOUNT DOCKER CLI INTO THE AGENT CONTAINER
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v /usr/bin/docker-compose:/usr/bin/docker-compose'
         }
     }
 
