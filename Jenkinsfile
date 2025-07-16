@@ -24,17 +24,42 @@ pipeline {
                 script {
                     echo 'Running Maven Unit Tests...'
                     docker.image('maven:3.8.5-openjdk-17').inside {
-                        sh 'mvn clean install -DskipTests'
-                        sh 'mvn test -e'
+                        sh 'mvn clean install -DskipTests' // Installs dependencies and prepares for tests
+                        sh 'mvn test -e' // Runs tests
                     }
                 }
             }
             post {
                 failure {
-                    echo 'Unit tests failed. Skipping deployment.'
+                    echo 'Unit tests failed. Skipping further analysis and deployment.'
                 }
             }
         }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    echo 'Running SonarQube analysis...'
+                    // 'withSonarQubeEnv' links to the server configured in Jenkins
+                    withSonarQubeEnv('MySonarQube') { // Use the Name you set in Jenkins System config
+                        docker.image('maven:3.8.5-openjdk-17').inside {
+                            // The 'sonar:sonar' goal performs the analysis
+                            // Ensure you run 'clean verify' or 'clean install' before 'sonar:sonar'
+                            // to have compiled classes and test results available for analysis.
+                            // If your previous 'Run Unit Tests' stage already does 'mvn clean install',
+                            // you might only need 'mvn sonar:sonar' here.
+                            sh 'mvn clean verify sonar:sonar'
+                        }
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo 'SonarQube analysis failed!'
+                }
+            }
+        }
+
 
         stage('Build Docker Image') {
             steps {
