@@ -1,15 +1,20 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'maven:3.9.6-eclipse-temurin-17' 
+            args '-v /var/run/docker.sock:/var/run/docker.sock' 
+        }
+    }
 
     environment {
-        DOCKER_IMAGE = "salhifiras/foyer2425-main" 
+        DOCKER_IMAGE = "salhifiras/foyer2425-main"
         APP_PORT = "8080"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SalhiFiras/Foyer2425-main.git' 
+                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SalhiFiras/Foyer2425-main.git'
             }
         }
 
