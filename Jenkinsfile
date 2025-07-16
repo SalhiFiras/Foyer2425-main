@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github-credentials', url: 'https://github.com/SalhiFiras/Foyer2425-main.git' 
+                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SalhiFiras/Foyer2425-main.git' 
             }
         }
 
