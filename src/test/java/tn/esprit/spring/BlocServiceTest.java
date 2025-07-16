@@ -12,8 +12,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class BlocServiceTest {
 
     @BeforeAll
-    void bedore() {
-
+    public static void bedore() { // Ensure this line has 'public static'
+        // ... your setup code
     }
 
     @AfterAll
