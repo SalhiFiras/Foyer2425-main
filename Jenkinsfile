@@ -48,7 +48,7 @@ pipeline {
                             // to have compiled classes and test results available for analysis.
                             // If your previous 'Run Unit Tests' stage already does 'mvn clean install',
                             // you might only need 'mvn sonar:sonar' here.
-                            sh 'mvn clean verify sonar:sonar'
+                            sh 'mvn clean verify sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=target/jacoco.xml'
                         }
                     }
                 }
