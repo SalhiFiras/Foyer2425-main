@@ -5,7 +5,7 @@ pipeline {
         DOCKER_HUB_USERNAME = 'salhifiras'
         IMAGE_NAME = 'foyer2425-main'
         APP_NAME = 'my-spring-boot-app'
-        HOST_PORT = 8082 // Host port for the Spring Boot application (CHANGED from 8081 to 8082)
+        HOST_PORT = 8082 // Host port for the Spring Boot application (Changed from 8081 to 8082)
         CONTAINER_PORT = 8080 // Internal port of the Spring Boot application
     }
 
@@ -42,7 +42,10 @@ pipeline {
                     echo 'Running SonarQube analysis...'
                     // 'withSonarQubeEnv' links to the server configured in Jenkins
                     withSonarQubeEnv('MySonarQube') { // Use the Name you configured in Jenkins System Configuration
-                        sh 'mvn sonar:sonar'
+                        // Execute Maven command inside the Maven Docker container
+                        docker.image('maven:3.8.5-openjdk-17').inside { // <--- ADDED THIS BLOCK
+                            sh 'mvn sonar:sonar'
+                        } // <--- END OF ADDED BLOCK
                     }
                 }
             }
