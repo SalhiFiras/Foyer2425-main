@@ -5,7 +5,7 @@ pipeline {
         DOCKER_HUB_USERNAME = 'salhifiras'
         IMAGE_NAME = 'foyer2425-main'
         APP_NAME = 'my-spring-boot-app'
-        HOST_PORT = 8081 // Host port for the Spring Boot application (to avoid conflict with Jenkins)
+        HOST_PORT = 8082 // Host port for the Spring Boot application (CHANGED from 8081 to 8082)
         CONTAINER_PORT = 8080 // Internal port of the Spring Boot application
     }
 
@@ -41,38 +41,19 @@ pipeline {
                 script {
                     echo 'Running SonarQube analysis...'
                     // 'withSonarQubeEnv' links to the server configured in Jenkins
-                    withSonarQubeEnv('MySonarQube') { // Use the Name you set in Jenkins System config
-                        docker.image('maven:3.8.5-openjdk-17').inside {
-                            // The 'sonar:sonar' goal performs the analysis
-                            // Ensure you run 'clean verify' or 'clean install' before 'sonar:sonar'
-                            // to have compiled classes and test results available for analysis.
-                            // If your previous 'Run Unit Tests' stage already does 'mvn clean install',
-                            // you might only need 'mvn sonar:sonar' here.
-                            sh 'mvn clean verify sonar:sonar -Dsonar.host.url=http://192.168.179.128:9000 -Dsonar.coverage.jacoco.xmlReportPaths=target/jacoco.xml' // 
-                        }
+                    withSonarQubeEnv('MySonarQube') { // Use the Name you configured in Jenkins System Configuration
+                        sh 'mvn sonar:sonar'
                     }
                 }
             }
-            post {
-                failure {
-                    echo 'SonarQube analysis failed!'
-                }
-            }
         }
 
-
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    docker.build("${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest", ".") // [cite: 1, 13]
-                }
-            }
-        }
+                    docker.build("${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest", '.')
 
-        stage('Push Docker Image') {
-            steps {
-                script {
                     echo 'Pushing Docker image to Docker Hub...'
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
                         docker.image("${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest").push()
@@ -85,12 +66,12 @@ pipeline {
             steps {
                 script {
                     echo 'Deploying application to VM...'
-                    sh "docker stop ${APP_NAME} || true" // [cite: 1, 16]
-                    sh "docker rm ${APP_NAME} || true" // [cite: 1, 16]
+                    sh "docker stop ${APP_NAME} || true"
+                    sh "docker rm ${APP_NAME} || true"
 
                     // Run the new Docker container, mapping HOST_PORT to CONTAINER_PORT
                     // AND connecting it to the 'monitoring_network'
-                    sh "docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${APP_NAME} --network monitoring_network ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest" // [cite: 1, 17]
+                    sh "docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${APP_NAME} --network monitoring_network ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest"
                 }
             }
             post {
@@ -106,7 +87,7 @@ pipeline {
 
     post {
         always {
-            cleanWs() // Clean up workspace regardless of build status // [cite: 1, 19]
+            cleanWs() // Clean up workspace regardless of build status
         }
         success {
             echo 'Pipeline finished successfully!'

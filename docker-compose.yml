@@ -47,9 +47,8 @@ services:
     ports:
       - "9090:9090" # Prometheus UI
     volumes:
-      # THIS IS THE CRUCIAL CHANGE:
-      # Mount the current host directory ('.') to the Prometheus config directory '/etc/prometheus/'
-      - .:/etc/prometheus/
+      # Explicitly mount the prometheus.yml file directly (fixed from previous attempts)
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command: --config.file=/etc/prometheus/prometheus.yml # Prometheus will find prometheus.yml inside this mounted directory
     networks:
       - monitoring_network # Must be on the same network as the Spring Boot app
@@ -67,9 +66,35 @@ services:
     depends_on:
       - prometheus # Grafana needs Prometheus as its data source
 
-# Define named volumes for persistent data (uncomment if you need them)
-# volumes:
-#   sonarqube_data:
-#   sonarqube_extensions:
-#   sonarqube_logs:
-#   db_data:
+  # Nexus Repository Manager
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus
+    ports:
+      - "8081:8081" # Nexus UI and default access port
+    volumes:
+      - nexus_data:/nexus-data # Persistent storage for Nexus
+    networks:
+      - monitoring_network # Ensure Nexus is on the same network if other services need to interact
+    environment:
+      # Adjust memory allocation if needed, default is often 2703M.
+      # These values (256m - 768m) are good for VMs with limited RAM (e.g., 4GB).
+      # Remove this line or increase values if your VM has more RAM.
+      INSTALL4J_ADD_VM_PARAMS: "-Xms256m -Xmx768m"
+    restart: unless-stopped # Always restart unless explicitly stopped
+    healthcheck: # Added healthcheck to ensure Nexus is ready before dependent services might use it
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/repository/maven-public/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Give Nexus more time to start up on first boot
+
+
+# Define named volumes for persistent data
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  db_data:
+  nexus_data: # <--- NEW NAMED VOLUME FOR NEXUS
+    driver: local
