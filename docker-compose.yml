@@ -47,7 +47,7 @@ services:
     ports:
       - "9090:9090" # Prometheus UI
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro # Mount the Prometheus configuration file
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Mount the configuration file
     command: --config.file=/etc/prometheus/prometheus.yml # Specify the configuration file
     networks:
       - monitoring_network # Must be on the same network as the Spring Boot app
