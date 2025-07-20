@@ -42,8 +42,8 @@ pipeline {
                     echo 'Running SonarQube analysis...'
                     // 'withSonarQubeEnv' links to the server configured in Jenkins
                     withSonarQubeEnv('MySonarQube') { // Use the Name you configured in Jenkins System Configuration
-                        // Execute Maven command inside the Maven Docker container, connected to the monitoring_network
-                        docker.image('maven:3.8.5-openjdk-17').inside(args: '--network monitoring_network') { // <--- ADDED args: '--network monitoring_network'
+                        // Explicitly pass the arguments as a map to 'inside'
+                        docker.image('maven:3.8.5-openjdk-17').inside([args: '--network monitoring_network']) { // <--- CHANGED THIS LINE
                             sh 'mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000'
                         }
                     }
