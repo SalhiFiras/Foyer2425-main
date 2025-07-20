@@ -47,9 +47,10 @@ services:
     ports:
       - "9090:9090" # Prometheus UI
     volumes:
-      # THIS IS THE CRUCIAL CHANGE: Mount the directory, not the file directly
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro # Mount the configuration file
-    command: --config.file=/etc/prometheus/prometheus.yml # Specify the configuration file
+      # THIS IS THE CRUCIAL CHANGE:
+      # Mount the current host directory ('.') to the Prometheus config directory '/etc/prometheus/'
+      - .:/etc/prometheus/
+    command: --config.file=/etc/prometheus/prometheus.yml # Prometheus will find prometheus.yml inside this mounted directory
     networks:
       - monitoring_network # Must be on the same network as the Spring Boot app
     depends_on:
