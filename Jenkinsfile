@@ -40,21 +40,25 @@ pipeline {
             steps {
                 script {
                     echo 'Running SonarQube analysis...'
-                    withSonarQubeEnv('MySonarQube') { // Use the Name you configured in Jenkins System Configuration
-                        // Start the Maven container in detached mode and get its ID
-                        def containerId = sh(returnStdout: true, script: "docker run -d --network monitoring_network maven:3.8.5-openjdk-17 sh -c 'tail -f /dev/null'").trim()
-                        
-                        try {
-                            // Copy the current Jenkins workspace into the container's /app directory
-                            sh "docker cp . ${containerId}:/app"
+                    withSonarQubeEnv('MySonarQube') { // Uses the SonarQube server configuration from Jenkins
+                        // Use withCredentials to get the SonarQube auth token
+                        withCredentials([string(credentialsId: 'sonarqube-auth-token', variable: 'SONAR_AUTH_TOKEN')]) { // <--- ADDED THIS BLOCK
+                            // Start the Maven container in detached mode and get its ID
+                            def containerId = sh(returnStdout: true, script: "docker run -d --network monitoring_network maven:3.8.5-openjdk-17 sh -c 'tail -f /dev/null'").trim()
                             
-                            // Execute the Maven Sonar command inside the container, from the /app directory using -w
-                            sh "docker exec -w /app ${containerId} mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000" // <--- CHANGED THIS LINE
-                        } finally {
-                            // Ensure the container is stopped and removed even if analysis fails
-                            sh "docker stop ${containerId}"
-                            sh "docker rm -f --volumes ${containerId}"
-                        }
+                            try {
+                                // Copy the current Jenkins workspace into the container's /app directory
+                                sh "docker cp . ${containerId}:/app"
+                                
+                                // Execute the Maven Sonar command inside the container, from the /app directory using -w
+                                // Pass the SonarQube login token using -Dsonar.login
+                                sh "docker exec -w /app ${containerId} mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=${SONAR_AUTH_TOKEN}" // <--- MODIFIED THIS LINE
+                            } finally {
+                                // Ensure the container is stopped and removed even if analysis fails
+                                sh "docker stop ${containerId}"
+                                sh "docker rm -f --volumes ${containerId}"
+                            }
+                        } // <--- END OF withCredentials BLOCK
                     }
                 }
             }
