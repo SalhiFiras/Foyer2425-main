@@ -43,9 +43,9 @@ pipeline {
                     // 'withSonarQubeEnv' links to the server configured in Jenkins
                     withSonarQubeEnv('MySonarQube') { // Use the Name you configured in Jenkins System Configuration
                         // Execute Maven command inside the Maven Docker container
-                        docker.image('maven:3.8.5-openjdk-17').inside { // <--- ADDED THIS BLOCK
-                            sh 'mvn sonar:sonar'
-                        } // <--- END OF ADDED BLOCK
+                        docker.image('maven:3.8.5-openjdk-17').inside {
+                            sh 'mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000' // <--- ADDED THIS PARAMETER
+                        }
                     }
                 }
             }
