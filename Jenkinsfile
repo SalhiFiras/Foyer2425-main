@@ -46,10 +46,10 @@ pipeline {
                         
                         try {
                             // Copy the current Jenkins workspace into the container's /app directory
-                            sh "docker cp . ${containerId}:/app" // <--- ADDED THIS LINE
+                            sh "docker cp . ${containerId}:/app"
                             
-                            // Execute the Maven Sonar command inside the container, from the /app directory
-                            sh "docker exec ${containerId} mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000"
+                            // Execute the Maven Sonar command inside the container, from the /app directory using -w
+                            sh "docker exec -w /app ${containerId} mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000" // <--- CHANGED THIS LINE
                         } finally {
                             // Ensure the container is stopped and removed even if analysis fails
                             sh "docker stop ${containerId}"
