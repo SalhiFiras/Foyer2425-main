@@ -40,14 +40,22 @@ pipeline {
             steps {
                 script {
                     echo 'Running SonarQube analysis...'
-                    // 'withSonarQubeEnv' links to the server configured in Jenkins
                     withSonarQubeEnv('MySonarQube') { // Use the Name you configured in Jenkins System Configuration
-                        // Explicitly run the Docker image with network and assign it to a variable
-                        def mavenContainer = docker.image('maven:3.8.5-openjdk-17').run('--network monitoring_network') // <--- NEW WAY TO RUN CONTAINER WITH NETWORK
-
-                        // Now execute commands inside the launched container
-                        mavenContainer.inside { // <--- SIMPLER INSIDE CALL
-                            sh 'mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000'
+                        // Start the Maven container in detached mode and get its ID
+                        def containerId = sh(returnStdout: true, script: "docker run -d --network monitoring_network maven:3.8.5-openjdk-17 sh -c 'tail -f /dev/null'").trim()
+                        
+                        try {
+                            // Copy the workspace contents into the container
+                            // Assuming workspace is at /var/lib/jenkins/workspace/SpringBoot-CI-CD-Pipeline
+                            // And the container's WORKDIR is /usr/src/app (default for maven image, or /app if specified in Dockerfile)
+                            sh "docker cp . ${containerId}:/usr/src/app" // Copy current workspace to container's WORKDIR
+                            
+                            // Execute the Maven Sonar command inside the running container
+                            sh "docker exec ${containerId} mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000"
+                        } finally {
+                            // Ensure the container is stopped and removed even if analysis fails
+                            sh "docker stop ${containerId}"
+                            sh "docker rm -f --volumes ${containerId}"
                         }
                     }
                 }
