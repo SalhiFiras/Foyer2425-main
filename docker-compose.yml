@@ -1,0 +1,73 @@
+version: '3.8'
+
+networks:
+  monitoring_network: # This network is crucial for all services to communicate
+    driver: bridge
+
+services:
+  # SonarQube Service
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9000:9000" # SonarQube UI
+      - "9092:9092" # SonarQube secondary port (for internal communication)
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    networks:
+      - monitoring_network
+    # If you want persistent data, uncomment the volumes section below
+    # volumes:
+    #   - sonarqube_data:/opt/sonarqube/data
+    #   - sonarqube_extensions:/opt/sonarqube/extensions
+    #   - sonarqube_logs:/opt/sonarqube/logs
+    depends_on:
+      - db # SonarQube needs its database to start
+
+  # PostgreSQL Database for SonarQube
+  db:
+    image: postgres:15-alpine
+    container_name: sonarqube-db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    networks:
+      - monitoring_network
+    # If you want persistent data, uncomment the volumes section below
+    # volumes:
+    #   - db_data:/var/lib/postgresql/data
+
+  # Prometheus Monitoring Server
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090" # Prometheus UI
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro # Mount the Prometheus configuration file
+    command: --config.file=/etc/prometheus/prometheus.yml # Specify the configuration file
+    networks:
+      - monitoring_network # Must be on the same network as the Spring Boot app
+    depends_on:
+      - sonarqube # Start Prometheus after core services (not a strict dependency, but good practice)
+
+  # Grafana Visualization Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000" # Grafana UI
+    networks:
+      - monitoring_network
+    depends_on:
+      - prometheus # Grafana needs Prometheus as its data source
+
+# Define named volumes for persistent data (uncomment if you need them)
+# volumes:
+#   sonarqube_data:
+#   sonarqube_extensions:
+#   sonarqube_logs:
+#   db_data:
