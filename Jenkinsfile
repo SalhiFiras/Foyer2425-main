@@ -45,12 +45,10 @@ pipeline {
                         def containerId = sh(returnStdout: true, script: "docker run -d --network monitoring_network maven:3.8.5-openjdk-17 sh -c 'tail -f /dev/null'").trim()
                         
                         try {
-                            // Copy the workspace contents into the container
-                            // Assuming workspace is at /var/lib/jenkins/workspace/SpringBoot-CI-CD-Pipeline
-                            // And the container's WORKDIR is /usr/src/app (default for maven image, or /app if specified in Dockerfile)
-                            sh "docker cp . ${containerId}:/usr/src/app" // Copy current workspace to container's WORKDIR
+                            // Copy the current Jenkins workspace into the container's /app directory
+                            sh "docker cp . ${containerId}:/app" // <--- ADDED THIS LINE
                             
-                            // Execute the Maven Sonar command inside the running container
+                            // Execute the Maven Sonar command inside the container, from the /app directory
                             sh "docker exec ${containerId} mvn sonar:sonar -Dsonar.host.url=http://sonarqube:9000"
                         } finally {
                             // Ensure the container is stopped and removed even if analysis fails
