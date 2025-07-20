@@ -48,7 +48,7 @@ pipeline {
                             // to have compiled classes and test results available for analysis.
                             // If your previous 'Run Unit Tests' stage already does 'mvn clean install',
                             // you might only need 'mvn sonar:sonar' here.
-                            sh 'mvn clean verify sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=target/jacoco.xml'
+                            sh 'mvn clean verify sonar:sonar -Dsonar.host.url=http://192.168.179.128:9000 -Dsonar.coverage.jacoco.xmlReportPaths=target/jacoco.xml' // 
                         }
                     }
                 }
@@ -65,7 +65,7 @@ pipeline {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    docker.build("${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest", ".")
+                    docker.build("${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest", ".") // [cite: 1, 13]
                 }
             }
         }
@@ -85,12 +85,12 @@ pipeline {
             steps {
                 script {
                     echo 'Deploying application to VM...'
-                    sh "docker stop ${APP_NAME} || true"
-                    sh "docker rm ${APP_NAME} || true"
+                    sh "docker stop ${APP_NAME} || true" // [cite: 1, 16]
+                    sh "docker rm ${APP_NAME} || true" // [cite: 1, 16]
 
                     // Run the new Docker container, mapping HOST_PORT to CONTAINER_PORT
                     // AND connecting it to the 'monitoring_network'
-                    sh "docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${APP_NAME} --network monitoring_network ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest"
+                    sh "docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${APP_NAME} --network monitoring_network ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest" // [cite: 1, 17]
                 }
             }
             post {
@@ -106,7 +106,7 @@ pipeline {
 
     post {
         always {
-            cleanWs() // Clean up workspace regardless of build status
+            cleanWs() // Clean up workspace regardless of build status // [cite: 1, 19]
         }
         success {
             echo 'Pipeline finished successfully!'
